@@ -7,7 +7,7 @@ data class KeyForgeCard(
         val id: String,
         val card_title: String,
         val house: String,
-        val card_type: CardType,
+        val card_type: KeyForgeCardType,
         val front_image: String,
         val card_text: String,
         val amber: Int,
@@ -19,13 +19,16 @@ data class KeyForgeCard(
         val expansion: Int,
         val is_maverick: Boolean,
         val is_anomaly: Boolean,
+        val is_enhanced: Boolean,
         val traits: String? = null
 )
 
-enum class CardType {
+enum class KeyForgeCardType {
     Action,
     Artifact,
     Creature,
+    Creature1,
+    Creature2,
     Upgrade;
 }
 
@@ -34,5 +37,6 @@ enum class Rarity {
     Uncommon,
     Rare,
     Variant,
-    FIXED;
+    FIXED,
+    Special;
 }
