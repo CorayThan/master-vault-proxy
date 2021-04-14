@@ -7,13 +7,13 @@ data class KeyForgeCard(
         val id: String,
         val card_title: String,
         val house: String,
-        val card_type: KeyForgeCardType,
+        val card_type: String,
         val front_image: String,
         val card_text: String,
         val amber: Int,
         val power: String?,
         val armor: String?,
-        val rarity: Rarity,
+        val rarity: String,
         val flavor_text: String? = null,
         val card_number: String,
         val expansion: Int,
@@ -22,21 +22,3 @@ data class KeyForgeCard(
         val is_enhanced: Boolean,
         val traits: String? = null
 )
-
-enum class KeyForgeCardType {
-    Action,
-    Artifact,
-    Creature,
-    Creature1,
-    Creature2,
-    Upgrade;
-}
-
-enum class Rarity {
-    Common,
-    Uncommon,
-    Rare,
-    Variant,
-    FIXED,
-    Special;
-}
