@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "coraythan"
-version = "3"
+version = "4"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
