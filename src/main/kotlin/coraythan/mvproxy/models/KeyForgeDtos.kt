@@ -10,7 +10,8 @@ data class KeyForgeDeckResponse(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class KeyForgeDecksPageDto(
         val count: Int,
-        val data: List<KeyForgeDeck>
+        val data: List<KeyForgeDeck>,
+        val _linked: KeyForgeDeckLinksFullCards
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

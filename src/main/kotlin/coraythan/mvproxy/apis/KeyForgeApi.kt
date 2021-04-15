@@ -1,5 +1,6 @@
 package coraythan.mvproxy.apis
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import coraythan.mvproxy.models.KeyForgeDeckDto
 import coraythan.mvproxy.models.KeyForgeDeckResponse
 import coraythan.mvproxy.models.KeyForgeDecksPageDto
@@ -24,17 +25,21 @@ class KeyForgeApi(
     /**
      * Null implies no decks available.
      */
-    fun findDecks(page: Int, ordering: String = "date", pageSize: Int = keyforgeApiDeckPageSize, expansion: Int? = null): KeyForgeDecksPageDto? {
+    fun findDecks(page: Int, ordering: String = "date", pageSize: Int = keyforgeApiDeckPageSize, expansion: Int? = null, withCards: Boolean = false): KeyForgeDecksPageDto? {
         var decks: KeyForgeDecksPageDto? = null
 
         val keyforgeRequestDuration = measureTimeMillis {
             decks = keyforgeGetRequest(
                     KeyForgeDecksPageDto::class.java,
                     "decks/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
-                            if (expansion == null) "" else "&expansion=$expansion"
+                            (if (expansion == null) "" else "&expansion=$expansion") +
+                            (if (withCards) "&links=cards" else "")
             )
         }
-        log.debug("Getting $pageSize decks from keyforge api took $keyforgeRequestDuration got decks ${decks?.count}")
+        log.info("Getting $pageSize decks from keyforge api took $keyforgeRequestDuration got ${decks?.data?.size} decks for page $page with cards $withCards")
+
+//        log.info("Found decks: " + ObjectMapper().writeValueAsString(decks))
+
         return decks
     }
 
