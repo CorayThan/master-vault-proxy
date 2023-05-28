@@ -30,3 +30,9 @@ out/
 ### VS Code ###
 .vscode/
 
+docker/Dockerrun.aws.json
+docker/mvproxy.jar
+
+version.txt
+
+

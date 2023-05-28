@@ -12,5 +12,6 @@ data class KeyForgeDeck(
         val wins: Int = 0,
         val losses: Int = 0,
         val cards: List<String>? = null,
-        val _links: KeyForgeDeckLinks? = null
+        val _links: KeyForgeDeckLinks? = null,
+        val bonus_icons: List<KeyForgeCardBonusIcons>? = null,
 )

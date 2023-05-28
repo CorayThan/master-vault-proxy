@@ -1,6 +1,5 @@
 package coraythan.mvproxy.apis
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import coraythan.mvproxy.models.KeyForgeDeckDto
 import coraythan.mvproxy.models.KeyForgeDeckResponse
 import coraythan.mvproxy.models.KeyForgeDecksPageDto
@@ -17,7 +16,7 @@ const val keyforgeApiDeckPageSize = 10
 
 @Service
 class KeyForgeApi(
-        val restTemplate: RestTemplate
+    val restTemplate: RestTemplate
 ) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -25,15 +24,21 @@ class KeyForgeApi(
     /**
      * Null implies no decks available.
      */
-    fun findDecks(page: Int, ordering: String = "date", pageSize: Int = keyforgeApiDeckPageSize, expansion: Int? = null, withCards: Boolean = false): KeyForgeDecksPageDto? {
-        var decks: KeyForgeDecksPageDto? = null
+    fun findDecks(
+        page: Int,
+        ordering: String = "date",
+        pageSize: Int = keyforgeApiDeckPageSize,
+        expansion: Int? = null,
+        withCards: Boolean = false
+    ): KeyForgeDecksPageDto? {
+        var decks: KeyForgeDecksPageDto?
 
         val keyforgeRequestDuration = measureTimeMillis {
             decks = keyforgeGetRequest(
-                    KeyForgeDecksPageDto::class.java,
-                    "decks/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
-                            (if (expansion == null) "" else "&expansion=$expansion") +
-                            (if (withCards) "&links=cards" else "")
+                KeyForgeDecksPageDto::class.java,
+                "decks/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
+                        (if (expansion == null) "" else "&expansion=$expansion") +
+                        (if (withCards) "&links=cards" else "")
             )
         }
         log.info("Getting $pageSize decks from keyforge api took $keyforgeRequestDuration got ${decks?.data?.size} decks for page $page with cards $withCards")
@@ -44,31 +49,32 @@ class KeyForgeApi(
     }
 
     fun findDeck(deckId: String, withCards: Boolean = true): KeyForgeDeckResponse {
-        try {
+        return try {
             val found = keyforgeGetRequest(
-                    KeyForgeDeckDto::class.java,
-                    "decks/$deckId${if (withCards) "/?links=cards" else ""}"
+                KeyForgeDeckDto::class.java,
+                "decks/$deckId${if (withCards) "/?links=cards" else ""}"
             )
 
-            return KeyForgeDeckResponse(
-                    deck = found
+            KeyForgeDeckResponse(
+                deck = found
             )
         } catch (exception: Exception) {
-            return KeyForgeDeckResponse(error = exception.localizedMessage)
+            KeyForgeDeckResponse(error = exception.localizedMessage)
         }
     }
 
     private fun <T> keyforgeGetRequest(returnType: Class<T>, url: String): T? {
         try {
             val decksEntity = restTemplate.exchange(
-                    "https://www.keyforgegame.com/api/$url",
-                    HttpMethod.GET,
-                    HttpEntity<Any?>(null, HttpHeaders().let {
-                        it.set("cache-control", "no-cache")
-                        it.set("user-agent", "SpringBootRequest")
-                        it
-                    }),
-                    returnType)
+                "https://www.keyforgegame.com/api/$url",
+                HttpMethod.GET,
+                HttpEntity<Any?>(null, HttpHeaders().let {
+                    it.set("cache-control", "no-cache")
+                    it.set("user-agent", "SpringBootRequest")
+                    it
+                }),
+                returnType
+            )
             return decksEntity.body
         } catch (e: HttpClientErrorException.NotFound) {
             // No results
