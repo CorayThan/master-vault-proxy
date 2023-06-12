@@ -24,5 +24,6 @@ data class KeyForgeCard(
     val is_anomaly: Boolean,
     @get:JsonProperty("is_enhanced")
     val is_enhanced: Boolean,
+    val is_non_deck: Boolean,
     val traits: String? = null
 )
