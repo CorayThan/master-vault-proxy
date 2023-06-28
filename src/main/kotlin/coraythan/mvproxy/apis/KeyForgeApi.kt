@@ -36,7 +36,7 @@ class KeyForgeApi(
         val keyforgeRequestDuration = measureTimeMillis {
             decks = keyforgeGetRequest(
                 KeyForgeDecksPageDto::class.java,
-                "decks/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
+                "decks/v2/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
                         (if (expansion == null) "" else "&expansion=$expansion") +
                         (if (withCards) "&links=cards" else "")
             )
@@ -52,7 +52,7 @@ class KeyForgeApi(
         return try {
             val found = keyforgeGetRequest(
                 KeyForgeDeckDto::class.java,
-                "decks/$deckId${if (withCards) "/?links=cards" else ""}"
+                "decks/v2/$deckId${if (withCards) "/?links=cards" else ""}"
             )
 
             KeyForgeDeckResponse(
