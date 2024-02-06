@@ -2,61 +2,42 @@ package coraythan.mvproxy.apis
 
 import coraythan.mvproxy.models.KeyForgeDeckDto
 import coraythan.mvproxy.models.KeyForgeDeckResponse
-import coraythan.mvproxy.models.KeyForgeDecksPageDto
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
-import kotlin.system.measureTimeMillis
-
-const val keyforgeApiDeckPageSize = 10
 
 @Service
 class KeyForgeApi(
-    val restTemplate: RestTemplate
+        val restTemplate: RestTemplate
 ) {
+
+    private var requestsInFiveSec = 0
+
+    @Scheduled(fixedDelayString = "PT10S", initialDelayString = "PT10S")
+    fun resetRequests() {
+        requestsInFiveSec = 0
+    }
 
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    /**
-     * Null implies no decks available.
-     */
-    fun findDecks(
-        page: Int,
-        ordering: String = "date",
-        pageSize: Int = keyforgeApiDeckPageSize,
-        expansion: Int? = null,
-        withCards: Boolean = false
-    ): KeyForgeDecksPageDto? {
-        var decks: KeyForgeDecksPageDto?
-
-        val keyforgeRequestDuration = measureTimeMillis {
-            decks = keyforgeGetRequest(
-                KeyForgeDecksPageDto::class.java,
-                "decks/v2/?page=$page&page_size=$pageSize&search=&powerLevel=0,11&chains=0,24&ordering=$ordering" +
-                        (if (expansion == null) "" else "&expansion=$expansion") +
-                        (if (withCards) "&links=cards" else "")
-            )
-        }
-        log.info("Getting $pageSize decks from keyforge api took $keyforgeRequestDuration got ${decks?.data?.size} decks for page $page with cards $withCards")
-
-//        log.info("Found decks: " + ObjectMapper().writeValueAsString(decks))
-
-        return decks
-    }
-
     fun findDeck(deckId: String, withCards: Boolean = true): KeyForgeDeckResponse {
+        val rateLimited = canMakeRequest()
+        if (rateLimited != null) {
+            return rateLimited
+        }
         return try {
             val found = keyforgeGetRequest(
-                KeyForgeDeckDto::class.java,
-                "decks/v2/$deckId${if (withCards) "/?links=cards" else ""}"
+                    KeyForgeDeckDto::class.java,
+                    "decks/v2/$deckId${if (withCards) "/?links=cards" else ""}"
             )
 
             KeyForgeDeckResponse(
-                deck = found
+                    deck = found
             )
         } catch (exception: Exception) {
             KeyForgeDeckResponse(error = exception.localizedMessage)
@@ -66,19 +47,28 @@ class KeyForgeApi(
     private fun <T> keyforgeGetRequest(returnType: Class<T>, url: String): T? {
         try {
             val decksEntity = restTemplate.exchange(
-                "https://www.keyforgegame.com/api/$url",
-                HttpMethod.GET,
-                HttpEntity<Any?>(null, HttpHeaders().let {
-                    it.set("cache-control", "no-cache")
-                    it.set("user-agent", "SpringBootRequest")
-                    it
-                }),
-                returnType
+                    "https://www.keyforgegame.com/api/$url",
+                    HttpMethod.GET,
+                    HttpEntity<Any?>(null, HttpHeaders().let {
+                        it.set("cache-control", "no-cache")
+                        it.set("user-agent", "SpringBootRequest")
+                        it
+                    }),
+                    returnType
             )
             return decksEntity.body
         } catch (e: HttpClientErrorException.NotFound) {
             // No results
             return null
+        }
+    }
+
+    private fun canMakeRequest(): KeyForgeDeckResponse? {
+        if (requestsInFiveSec < 5) {
+            requestsInFiveSec++
+            return null
+        } else {
+            return KeyForgeDeckResponse(error = "Rate Limited")
         }
     }
 }
